@@ -100,7 +100,7 @@ class SyncJob:
         self.mapper.validate(key, payload)  # 2. бизнес-валидация входных данных
         projection: Projection = self.mapper.map(key, payload)  # строим проекцию под целевую систему
         self.target.validate(key, projection)  # 3. валидация перед записью в приёмник
-        internal_id = self.target.upsert(key, projection)  # создаём/обновляем сущность в целевой системе
+        internal_id = self.target.upsert(key, projection, binding=bound)  # создаём/обновляем сущность в целевой системе
         self.state.bind(key, internal_id, payload.version)  # сохраняем связь ExternalKey ↔ internal_id, version
 
         self._save_success_state(key, payload, prev_state)
