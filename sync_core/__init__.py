@@ -12,10 +12,10 @@ __all__ = [
 
 def __getattr__(name):
     if name == "BaseStateStore":
-        from .base_state_store import BaseStateStore
+        from .stores.base import BaseStateStore
         return BaseStateStore
     if name == "DefaultStateStore":
-        from .default_state_store import DefaultStateStore
+        from .stores.default import DefaultStateStore
         return DefaultStateStore
     if name in {
         "AbstractSyncBinding",
@@ -25,6 +25,6 @@ def __getattr__(name):
         "SyncCheckpoint",
         "SyncItemState",
     }:
-        from . import default_models
-        return getattr(default_models, name)
+        from .models import default
+        return getattr(default, name)
     raise AttributeError(name)

@@ -1,5 +1,5 @@
-from utils.sync_core.base_state_store import BaseStateStore
-from utils.sync_core.default_models import SyncBinding, SyncCheckpoint, SyncItemState
+from utils.sync_core.models import SyncBinding, SyncCheckpoint, SyncItemState
+from utils.sync_core.stores.base import BaseStateStore
 
 
 class DefaultStateStore(BaseStateStore):
