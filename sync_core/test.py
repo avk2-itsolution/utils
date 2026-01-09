@@ -1,11 +1,11 @@
 from django.db import models
 
 from telephony.functions.helpers import get_token
-from utils.sync_core.interfaces.mapper import Mapper
-from utils.sync_core.interfaces.source import Source
-from utils.sync_core.interfaces.state_store import StateStore
-from utils.sync_core.interfaces.target import Target
-from utils.sync_core.sync_job import SyncJob
+from .interfaces.mapper import Mapper
+from .interfaces.source import Source
+from .interfaces.state_store import StateStore
+from .interfaces.target import Target
+from .sync_job import SyncJob
 
 
 class SyncBindingModel(models.Model):
@@ -25,7 +25,7 @@ class SyncCheckpointModel(models.Model):
 # sync_core/state_store.py
 from typing import Optional
 
-from utils.sync_core.dto import ExternalKey, Binding, SyncResult
+from .dto import ExternalKey, Binding, SyncResult
 
 
 class DjangoStateStore(StateStore):
@@ -61,7 +61,7 @@ class DjangoStateStore(StateStore):
 from typing import Iterable, Optional
 import requests
 
-from utils.sync_core.dto.dto import ExternalKey, Payload
+from .dto import ExternalKey, Payload
 
 
 class TicketsApiSource(Source):
@@ -99,7 +99,7 @@ class TicketsApiSource(Source):
 
 
 # sync_core/mappers/ticket_to_activity.py
-from utils.sync_core.dto.dto import ExternalKey, Payload, Projection
+from .dto import ExternalKey, Payload, Projection
 
 
 class TicketToActivityMapper(Mapper):
@@ -125,7 +125,7 @@ class TicketToActivityMapper(Mapper):
 # sync_core/targets/bx_activity_target.py
 from django.utils import timezone
 
-from utils.sync_core.dto.dto import ExternalKey, Projection
+from .dto import ExternalKey, Projection
 
 
 class BxActivityTarget(Target):

@@ -4,18 +4,18 @@ import time
 import httpx
 from tenacity import RetryCallState, Retrying
 
-from utils.api_client.auth_strategy import AuthStrategy, NoAuthStrategy
-from utils.api_client.dto.api_config import ApiConfig
-from utils.api_client.dto.auth_state import AuthState
-from utils.api_client.dto.credentials import Credentials
-from utils.api_client.dto.dto import LogLevel
-from utils.api_client.dto.http_transport import HttpTransport
-from utils.api_client.dto.rate_limit_state import RateLimitState
-from utils.api_client.dto.retry_policy import RetryPolicy
+from .auth_strategy import AuthStrategy, NoAuthStrategy
+from .dto.api_config import ApiConfig
+from .dto.auth_state import AuthState
+from .dto.credentials import Credentials
+from .dto.dto import LogLevel
+from .dto.http_transport import HttpTransport
+from .dto.rate_limit_state import RateLimitState
+from .dto.retry_policy import RetryPolicy
 
 from typing import Any, Optional, Mapping
 
-from utils.api_client.errors import ApiError, AuthError, RateLimitError, RetryableError
+from .errors import ApiError, AuthError, RateLimitError, RetryableError
 
 
 class BaseApiClient:

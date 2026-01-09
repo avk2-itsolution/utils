@@ -2,9 +2,9 @@ from typing import Iterable, Optional, Type
 
 from django.db import models
 
-from utils.sync_core.dto import ExternalKey, Binding, KeyBinding, SyncItemState, SyncItemStatus
-from utils.sync_core.errors import StateError
-from utils.sync_core.interfaces import StateStore
+from ..dto import ExternalKey, Binding, KeyBinding, SyncItemState, SyncItemStatus
+from ..errors import StateError
+from ..interfaces import StateStore
 
 
 class BaseStateStore(StateStore):

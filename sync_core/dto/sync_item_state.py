@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from utils.sync_core.dto import ExternalKey
-from utils.sync_core.dto.sync_item_status import SyncItemStatus
+from . import ExternalKey
+from .sync_item_status import SyncItemStatus
 
 
 @dataclass(frozen=True, slots=True)

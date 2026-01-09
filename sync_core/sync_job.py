@@ -1,8 +1,8 @@
 from typing import Optional, Iterable
 
-from utils.sync_core.dto import SyncResult, Binding, Projection, ExternalKey, Payload, SyncItemState, SyncItemStatus
-from utils.sync_core.errors import SyncError, TemporaryError, PermanentError, TemporarySourceError, PermanentSourceError
-from utils.sync_core.interfaces import Source, Mapper, Target, StateStore, SyncLogger
+from .dto import SyncResult, Binding, Projection, ExternalKey, Payload, SyncItemState, SyncItemStatus
+from .errors import SyncError, TemporaryError, PermanentError, TemporarySourceError, PermanentSourceError
+from .interfaces import Source, Mapper, Target, StateStore, SyncLogger
 
 
 class SyncJob:

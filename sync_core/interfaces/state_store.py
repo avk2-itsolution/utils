@@ -1,6 +1,6 @@
 from typing import Protocol, Iterable, Optional
 
-from utils.sync_core.dto import ExternalKey, Binding, KeyBinding, SyncItemState
+from ..dto import ExternalKey, Binding, KeyBinding, SyncItemState
 
 
 class StateStore(Protocol):

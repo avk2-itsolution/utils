@@ -1,7 +1,7 @@
 from typing import Protocol, Iterable, Optional, Generic
 
-from utils.sync_core.dto import ExternalKey, Payload, Projection, Binding, KeyBinding
-from utils.sync_core.dto.payload import TSource
+from ..dto import ExternalKey, Payload, Projection, Binding, KeyBinding
+from ..dto.payload import TSource
 
 
 class Source(Protocol[TSource]):

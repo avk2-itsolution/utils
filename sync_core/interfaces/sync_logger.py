@@ -1,6 +1,6 @@
 from typing import Protocol
-from utils.sync_core.dto import ExternalKey
-from utils.sync_core.errors import SyncError
+from ..dto import ExternalKey
+from ..errors import SyncError
 
 
 class SyncLogger(Protocol):

@@ -1,7 +1,7 @@
 from typing import Protocol
 
-from utils.sync_core.dto import ExternalKey, Projection, Binding
-from utils.sync_core.dto.projection import TTarget
+from ..dto import ExternalKey, Projection, Binding
+from ..dto.projection import TTarget
 
 
 class Target(Protocol[TTarget]):

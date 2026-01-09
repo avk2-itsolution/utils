@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from utils.sync_core.dto import Payload
+from . import Payload
 
 
 @dataclass(frozen=True, slots=True)

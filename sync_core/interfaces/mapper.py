@@ -1,8 +1,8 @@
 from typing import Protocol
 
-from utils.sync_core.dto import ExternalKey, Payload, Projection
-from utils.sync_core.dto.payload import TSource
-from utils.sync_core.dto.projection import TTarget
+from ..dto import ExternalKey, Payload, Projection
+from ..dto.payload import TSource
+from ..dto.projection import TTarget
 
 
 class Mapper(Protocol[TSource, TTarget]):

@@ -5,8 +5,8 @@ from typing import Any, Dict, Iterable, Mapping, Optional
 
 import httpx
 
-from utils.api_client.dto.api_config import ApiConfig
-from utils.api_client.dto.transport_stats import TransportStats
+from .api_config import ApiConfig
+from .transport_stats import TransportStats
 
 @dataclass(slots=True)
 class HttpTransport:

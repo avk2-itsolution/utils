@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import timedelta, datetime
 from typing import Mapping, Tuple, Optional
 
-from utils.api_client.dto.dto import LogLevel
+from .dto import LogLevel
 
 
 @dataclass(slots=True)

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from utils.sync_core.dto import ExternalKey, Binding
+from . import ExternalKey, Binding
 
 
 @dataclass(frozen=True, slots=True)

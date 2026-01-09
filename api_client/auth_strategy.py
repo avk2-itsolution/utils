@@ -9,8 +9,8 @@ import httpx
 import requests
 from requests import Response
 
-from utils.api_client.dto.auth_state import AuthState
-from utils.api_client.dto.credentials import Credentials
+from .dto.auth_state import AuthState
+from .dto.credentials import Credentials
 
 
 # предполагаем, что эти классы уже есть

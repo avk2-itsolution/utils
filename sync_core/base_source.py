@@ -5,9 +5,9 @@ from typing import Any, Callable, Generic, Iterable, Optional, Tuple, TypeVar
 
 import requests
 
-from utils.sync_core.dto import ExternalKey, Payload
-from utils.sync_core.errors import TemporarySourceError, PermanentSourceError
-from utils.sync_core.interfaces import Source
+from .dto import ExternalKey, Payload
+from .errors import TemporarySourceError, PermanentSourceError
+from .interfaces import Source
 
 TSource = TypeVar("TSource")
 TItems = Iterable[tuple[ExternalKey, Payload[TSource]]]
