@@ -72,30 +72,33 @@ class TicketsApiSource(Source):
         self.api_key = api_key
         self.system_code = system_code
 
-    def fetch(self, since_token: Optional[str]) -> Iterable[tuple[ExternalKey, Payload]]:
+    def fetch(self, since_token: Optional[str]) -> tuple[Iterable[tuple[ExternalKey, Payload]], Optional[str]]:
         params = {}
         if since_token:
             params["since"] = since_token
 
-        next_page: Optional[str] = f"{self.base_url}/tickets"
-        while next_page:
-            resp = requests.get(
-                next_page,
-                headers={"Authorization": f"Bearer {self.api_key}"},
-                params=params,
-                timeout=10,
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            for item in data["results"]:
-                key = ExternalKey(system=self.system_code, key=str(item["id"]))
-                payload = Payload(
-                    data=item,
-                    version=item.get("updated_at"),  # или хеш
+        def _iter():
+            next_page: Optional[str] = f"{self.base_url}/tickets"
+            while next_page:
+                resp = requests.get(
+                    next_page,
+                    headers={"Authorization": f"Bearer {self.api_key}"},
+                    params=params,
+                    timeout=10,
                 )
-                yield key, payload
-            next_page = data.get("next")
-            params = {}  # для next обычно параметры уже закодированы в URL
+                resp.raise_for_status()
+                data = resp.json()
+                for item in data["results"]:
+                    key = ExternalKey(system=self.system_code, key=str(item["id"]))
+                    payload = Payload(
+                        data=item,
+                        version=item.get("updated_at"),  # или хеш
+                    )
+                    yield key, payload
+                next_page = data.get("next")
+                params = {}  # для next обычно параметры уже закодированы в URL
+
+        return _iter(), None
 
 
 # sync_core/mappers/ticket_to_activity.py

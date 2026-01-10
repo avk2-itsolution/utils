@@ -1,4 +1,4 @@
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Callable
 
 from .dto import SyncResult, Binding, Projection, ExternalKey, Payload, SyncItemState, SyncItemStatus
 from .errors import SyncError, TemporaryError, PermanentError, TemporarySourceError, PermanentSourceError
@@ -148,8 +148,13 @@ class SyncJob:
         """Обёртка над source.fetch с обработкой ошибок источника."""
         try:
             items, new_checkpoint = self.source.fetch(checkpoint)  # новый контракт
-            self._last_fetch_checkpoint = new_checkpoint          # запоминаем чекпоинт
-            yield from items                                      # остаёмся генератором
+            if callable(new_checkpoint):
+                for item in items:
+                    yield item
+                self._last_fetch_checkpoint = new_checkpoint()
+            else:
+                self._last_fetch_checkpoint = new_checkpoint          # запоминаем чекпоинт
+                yield from items                                      # остаёмся генератором
         except (TemporarySourceError, PermanentSourceError) as exc:
             self._log_fetch_error(exc)
             raise

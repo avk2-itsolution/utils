@@ -7,10 +7,11 @@ import requests
 
 from .dto import ExternalKey, Payload
 from .errors import TemporarySourceError, PermanentSourceError
-from .interfaces import Source
+from .interfaces import Source, FetchResult
 
 TSource = TypeVar("TSource")
 TItems = Iterable[tuple[ExternalKey, Payload[TSource]]]
+RawCheckpoint = Optional[Any] | Callable[[], Optional[Any]]
 
 
 class CheckpointType(str, Enum):
@@ -48,7 +49,7 @@ class BaseSource(Source[TSource], Generic[TSource], ABC):
         self._checkpoint_parser = checkpoint_parser
         self._checkpoint_formatter = checkpoint_formatter
 
-    def fetch(self, since_token: Optional[str]) -> Tuple[TItems, Optional[str]]:
+    def fetch(self, since_token: Optional[str]) -> FetchResult:
         if self.checkpoint_required and since_token is None:
             raise PermanentSourceError("checkpoint required")
 
@@ -58,15 +59,22 @@ class BaseSource(Source[TSource], Generic[TSource], ABC):
         except (requests.RequestException, ConnectionError, TimeoutError) as exc:
             raise TemporarySourceError(str(exc)) from exc
 
+        if callable(raw_checkpoint):
+            def _formatted_checkpoint():
+                return self._format_checkpoint(raw_checkpoint())
+
+            return items, _formatted_checkpoint
+
         formatted_checkpoint = self._format_checkpoint(raw_checkpoint)
         return items, formatted_checkpoint
 
     @abstractmethod
-    def _fetch(self, parsed_checkpoint: Any) -> Tuple[TItems, Optional[Any]]:
+    def _fetch(self, parsed_checkpoint: Any) -> Tuple[TItems, RawCheckpoint]:
         """
         :param parsed_checkpoint: чекпоинт, распарсенный согласно checkpoint_type
         :return: (items, raw_checkpoint) — чекпоинт можно вернуть в «сыром» виде (datetime/int/str/None),
                  BaseSource отформатирует и провалидирует его.
+                 Можно вернуть callable, если чекпоинт вычисляется после обхода итератора.
         """
         ...
 
