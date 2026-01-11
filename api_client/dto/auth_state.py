@@ -1,6 +1,8 @@
-from dataclasses import dataclass, field
+from dataclasses import field
 from datetime import timedelta, datetime
 from typing import Mapping, Tuple, Optional
+
+from sync_utils.dataclass_compat import dataclass_compat as dataclass
 
 from .dto import LogLevel
 

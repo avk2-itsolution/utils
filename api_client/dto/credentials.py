@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from sync_utils.dataclass_compat import dataclass_compat as dataclass
 from typing import Optional
 
 

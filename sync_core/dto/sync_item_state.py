@@ -1,5 +1,6 @@
-from dataclasses import dataclass
 from typing import Optional
+
+from sync_utils.dataclass_compat import dataclass_compat as dataclass
 
 from . import ExternalKey
 from .sync_item_status import SyncItemStatus

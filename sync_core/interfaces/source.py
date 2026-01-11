@@ -1,4 +1,4 @@
-from typing import Protocol, Iterable, Optional, Callable, TypeVar
+from typing import Protocol, Iterable, Optional, Callable, TypeVar, Union
 
 from ..dto import ExternalKey, Payload, Projection, Binding, KeyBinding
 from ..dto.payload import TSource
@@ -7,7 +7,7 @@ from ..dto.payload import TSource
 CheckpointValue = Optional[str]
 DeferredCheckpoint = Callable[[], Optional[str]]
 FetchedItems = Iterable[tuple[ExternalKey, Payload[TSource]]]
-FetchResult = tuple[FetchedItems, CheckpointValue | DeferredCheckpoint]
+FetchResult = tuple[FetchedItems, Union[CheckpointValue, DeferredCheckpoint]]
 
 
 class Source(Protocol[TSource]):

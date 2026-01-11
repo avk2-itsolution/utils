@@ -1,6 +1,8 @@
-from dataclasses import dataclass, field
+from dataclasses import field
 from enum import Enum, auto
 from typing import Any, Optional, Sequence, Tuple, Type
+
+from sync_utils.dataclass_compat import dataclass_compat as dataclass
 
 import httpx
 from tenacity import Retrying, stop_after_attempt, wait_fixed, wait_exponential, retry_if_exception_type

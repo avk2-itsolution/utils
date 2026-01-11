@@ -6,7 +6,7 @@ from urllib.parse import unquote
 import sys
 import traceback
 import requests
-from typing import Text, Any
+from typing import Text, Any, Optional
 
 from django.conf import settings
 
@@ -19,7 +19,7 @@ USERNAMES = "@avk_its\n\n"
 
 
 def debug_point_async(message: Text, with_tags: bool = True, with_traceback: bool = True):
-    tb_text: str | None = None
+    tb_text: Optional[str] = None
     if with_traceback and sys.exc_info()[0] is not None:
         tb_text = traceback.format_exc()
 
@@ -30,7 +30,7 @@ def debug_point_async(message: Text, with_tags: bool = True, with_traceback: boo
     thread.start()
 
 
-def debug_point(message: Text, with_tags: bool, tb_text: str | None = None):
+def debug_point(message: Text, with_tags: bool, tb_text: Optional[str] = None):
     token = settings.DEBUG_BOT_TOKEN
     chat_id = settings.DEBUG_CHAT_ID
 

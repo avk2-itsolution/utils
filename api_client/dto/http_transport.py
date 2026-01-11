@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import field
 from typing import Any, Dict, Iterable, Mapping, Optional
+
+from sync_utils.dataclass_compat import dataclass_compat as dataclass
 
 import httpx
 

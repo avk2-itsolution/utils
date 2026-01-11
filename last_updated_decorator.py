@@ -3,9 +3,10 @@ from django.utils.timezone import now
 from django.utils.dateparse import parse_datetime
 
 from integration_utils.its_utils.app_settings.models import KeyValue
+from typing import Optional
 
 
-def sync_with_last_updated(key: str | None = None):
+def sync_with_last_updated(key: Optional[str] = None):
     """
     Декоратор: пробрасывает last_updated как datetime,
     а после выполнения обновляет KeyValue на момент начала вызова.

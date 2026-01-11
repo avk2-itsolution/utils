@@ -1,5 +1,7 @@
-from dataclasses import dataclass, field
+from dataclasses import field
 from typing import Mapping, Tuple
+
+from sync_utils.dataclass_compat import dataclass_compat as dataclass
 
 from .dto import LogLevel
 

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from sync_utils.dataclass_compat import dataclass_compat as dataclass
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -6,6 +6,7 @@ import typing
 from typing import Any, Optional, Generic, TypeVar, Union
 
 TSource = TypeVar("TSource")
+SelfPayload = TypeVar("SelfPayload", bound="Payload")
 VersionValue = Union[datetime, str, int, float]
 
 
@@ -26,19 +27,19 @@ class Payload(Generic[TSource]):
     )
 
     @classmethod
-    def with_version_from_datetime(cls, data: TSource, dt: VersionValue) -> typing.Self:
+    def with_version_from_datetime(cls, data: TSource, dt: VersionValue) -> SelfPayload:
         """Фабрика Payload с версией, рассчитанной из datetime/ts/строки."""
         version = cls.version_from_datetime(dt)
         return cls(data=data, version=version)
 
     @classmethod
-    def with_version_from_monotonic(cls, data: TSource, value: VersionValue) -> typing.Self:
+    def with_version_from_monotonic(cls, data: TSource, value: VersionValue) -> SelfPayload:
         """Фабрика Payload с версией, рассчитанной из монотонного id."""
         version = cls.version_from_monotonic(value)
         return cls(data=data, version=version)
 
     @classmethod
-    def with_version_from_hash(cls, data: TSource) -> typing.Self:
+    def with_version_from_hash(cls, data: TSource) -> SelfPayload:
         """Фабрика Payload с версией, рассчитанной по sha256 от данных."""
         version = cls.version_from_hash(data)
         return cls(data=data, version=version)

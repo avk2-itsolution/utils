@@ -1,6 +1,8 @@
-from dataclasses import dataclass, field
+from dataclasses import field
 from statistics import mean
 from typing import Any, Mapping, Optional
+
+from sync_utils.dataclass_compat import dataclass_compat as dataclass
 
 import httpx
 

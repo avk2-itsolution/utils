@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import field
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, Mapping, MutableMapping, Optional, Sequence, Tuple, Type
+
+from sync_utils.dataclass_compat import dataclass_compat as dataclass
 
 
 @dataclass(slots=True)

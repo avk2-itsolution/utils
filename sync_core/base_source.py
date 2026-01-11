@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Generic, Iterable, Optional, Tuple, TypeVar
+from typing import Any, Callable, Generic, Iterable, Optional, Tuple, TypeVar, Union
 
 import requests
 
@@ -11,7 +11,7 @@ from .interfaces import Source, FetchResult
 
 TSource = TypeVar("TSource")
 TItems = Iterable[tuple[ExternalKey, Payload[TSource]]]
-RawCheckpoint = Optional[Any] | Callable[[], Optional[Any]]
+RawCheckpoint = Union[Optional[Any], Callable[[], Optional[Any]]]
 
 
 class CheckpointType(str, Enum):
