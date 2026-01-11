@@ -1,9 +1,9 @@
-from sync_utils.dataclass_compat import dataclass_compat as dataclass
+from dataclasses import dataclass
 
 from . import ExternalKey, Binding
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class KeyBinding:
     key: ExternalKey
     binding: Binding

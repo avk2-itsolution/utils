@@ -1,13 +1,11 @@
-from dataclasses import field
+from dataclasses import field, dataclass
 from datetime import timedelta, datetime
 from typing import Mapping, Tuple, Optional
-
-from sync_utils.dataclass_compat import dataclass_compat as dataclass
 
 from .dto import LogLevel
 
 
-@dataclass(slots=True)
+@dataclass()
 class AuthState:
     """Динамическое состояние авторизации."""
     access_token: Optional[str] = None

@@ -1,16 +1,14 @@
 from __future__ import annotations
 
-from dataclasses import field
+from dataclasses import field, dataclass
 from typing import Any, Dict, Iterable, Mapping, Optional
-
-from sync_utils.dataclass_compat import dataclass_compat as dataclass
 
 import httpx
 
 from .api_config import ApiConfig
 from .transport_stats import TransportStats
 
-@dataclass(slots=True)
+@dataclass()
 class HttpTransport:
     """
     Обёртка над httpx.Client.

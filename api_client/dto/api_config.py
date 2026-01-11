@@ -1,12 +1,10 @@
-from dataclasses import field
+from dataclasses import field, dataclass
 from typing import Mapping, Tuple
-
-from sync_utils.dataclass_compat import dataclass_compat as dataclass
 
 from .dto import LogLevel
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class ApiConfig:
     """Базовые настройки клиента API."""
     base_url: str

@@ -1,8 +1,6 @@
-from dataclasses import field
+from dataclasses import field, dataclass
 from enum import Enum, auto
 from typing import Any, Optional, Sequence, Tuple, Type
-
-from sync_utils.dataclass_compat import dataclass_compat as dataclass
 
 import httpx
 from tenacity import Retrying, stop_after_attempt, wait_fixed, wait_exponential, retry_if_exception_type
@@ -13,7 +11,7 @@ class BackoffStrategy(Enum):
     EXPONENTIAL = auto()
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class RetryPolicy:
     max_attempts: int = 3
     backoff_strategy: BackoffStrategy = BackoffStrategy.EXPONENTIAL

@@ -1,10 +1,10 @@
-from sync_utils.dataclass_compat import dataclass_compat as dataclass
+from dataclasses import dataclass
 from typing import Optional
 
 from . import Payload
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class Binding:
     """Связка внешней сущности с внутренней: ID + версия."""
     internal_id: str

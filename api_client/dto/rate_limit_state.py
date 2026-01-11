@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import field
+from dataclasses import field, dataclass
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, Mapping, MutableMapping, Optional, Sequence, Tuple, Type
 
-from sync_utils.dataclass_compat import dataclass_compat as dataclass
 
-
-@dataclass(slots=True)
+@dataclass()
 class RateLimitState:
     """Простая модель лимитов за окно времени."""
     limit_per_window: int

@@ -1,14 +1,12 @@
 import typing
-from dataclasses import replace
+from dataclasses import replace, dataclass
 from datetime import datetime
 from typing import TypeVar
-
-from sync_utils.dataclass_compat import dataclass_compat as dataclass
 
 SelfSyncResult = TypeVar("SelfSyncResult", bound="SyncResult")
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class SyncResult:
     created: int = 0
     updated: int = 0

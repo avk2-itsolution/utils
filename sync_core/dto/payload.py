@@ -1,4 +1,4 @@
-from sync_utils.dataclass_compat import dataclass_compat as dataclass
+from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -10,7 +10,7 @@ SelfPayload = TypeVar("SelfPayload", bound="Payload")
 VersionValue = Union[datetime, str, int, float]
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(frozen=True)
 class Payload(Generic[TSource]):
     """Нормализованные данные из источника."""
     data: TSource

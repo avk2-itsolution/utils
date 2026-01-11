@@ -1,13 +1,11 @@
-from dataclasses import field
+from dataclasses import field, dataclass
 from statistics import mean
 from typing import Any, Mapping, Optional
-
-from sync_utils.dataclass_compat import dataclass_compat as dataclass
 
 import httpx
 
 
-@dataclass(slots=True)
+@dataclass()
 class TransportStats:
     total_requests: int = 0
     last_status_code: Optional[int] = None

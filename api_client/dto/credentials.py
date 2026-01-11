@@ -1,8 +1,8 @@
-from sync_utils.dataclass_compat import dataclass_compat as dataclass
+from dataclasses import dataclass
 from typing import Optional
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class Credentials:
     """Статичные данные авторизации (не access_token)."""
     api_key: Optional[str] = None
