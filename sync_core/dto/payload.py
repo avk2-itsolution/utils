@@ -2,12 +2,12 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
 import json
-import typing
 from typing import Any, Optional, Generic, TypeVar, Union
 
 TSource = TypeVar("TSource")
 SelfPayload = TypeVar("SelfPayload", bound="Payload")
 VersionValue = Union[datetime, str, int, float]
+JsonValue = Union[dict, list, str, int, float, bool, None]
 
 
 @dataclass(frozen=True)
@@ -40,8 +40,9 @@ class Payload(Generic[TSource]):
 
     @classmethod
     def with_version_from_hash(cls, data: TSource) -> SelfPayload:
-        """Фабрика Payload с версией, рассчитанной по sha256 от данных."""
-        version = cls.version_from_hash(data)
+        """Фабрика Payload с версией, рассчитанной по sha256 от сериализуемых данных."""
+        serialized_payload: JsonValue = cls._resolve_hash_payload(data)
+        version = cls.version_from_hash(serialized_payload)
         return cls(data=data, version=version)
 
     @staticmethod
@@ -66,6 +67,30 @@ class Payload(Generic[TSource]):
         except (TypeError, ValueError) as exc:
             raise ValueError(f"cannot hash payload: {exc}") from exc
         return hashlib.sha256(dump.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def _resolve_hash_payload(data: Any) -> JsonValue:
+        try:
+            json.dumps(data, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+            return data
+        except (TypeError, ValueError):
+            pass
+
+        candidates = (
+            getattr(data, "version_payload", None),
+            getattr(data, "serialize", None),
+            getattr(data, "to_dict", None),
+        )
+        for factory in candidates:
+            if callable(factory):
+                payload = factory()
+                try:
+                    json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+                except (TypeError, ValueError):
+                    continue
+                return payload
+
+        raise ValueError("payload is not JSON-serializable and no serializer found")
 
     @staticmethod
     def _parse_datetime_value(value: VersionValue) -> datetime:
