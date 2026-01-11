@@ -40,7 +40,16 @@ class AbstractSyncItemState(models.Model):
         unique_together = (("system", "ext_key"),)
 
     class Admin(admin.ModelAdmin):
-        list_display = ("system", "ext_key", "status", "version", "attempts", "last_error")
+        list_display = ("system", "ext_key", "status", "version", "attempts", "error_excerpt")
+        list_filter = ("system", "status")
+        search_fields = ("ext_key", "version", "last_error")
+        ordering = ("system", "ext_key")
+        list_per_page = 50
+
+        @admin.display(description="last_error")
+        def error_excerpt(self, obj):
+            text = obj.last_error or ""
+            return f"{text[:120]}..." if len(text) > 120 else text
 
 
 class SyncBinding(AbstractSyncBinding):
