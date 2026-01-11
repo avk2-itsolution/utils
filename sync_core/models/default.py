@@ -1,3 +1,4 @@
+from django.contrib import admin
 from django.db import models
 
 
@@ -11,6 +12,9 @@ class AbstractSyncBinding(models.Model):
         abstract = True
         unique_together = (("system", "ext_key"),)
 
+    class Admin(admin.ModelAdmin):
+        list_display = ("system", "ext_key", "internal_id", "version")
+
 
 class AbstractSyncCheckpoint(models.Model):
     stream = models.CharField(max_length=128, unique=True)
@@ -18,6 +22,9 @@ class AbstractSyncCheckpoint(models.Model):
 
     class Meta:
         abstract = True
+
+    class Admin(admin.ModelAdmin):
+        list_display = ("stream", "token",)
 
 
 class AbstractSyncItemState(models.Model):
@@ -31,6 +38,9 @@ class AbstractSyncItemState(models.Model):
     class Meta:
         abstract = True
         unique_together = (("system", "ext_key"),)
+
+    class Admin(admin.ModelAdmin):
+        list_display = ("system", "ext_key", "status", "version", "attempts", "last_error")
 
 
 class SyncBinding(AbstractSyncBinding):
