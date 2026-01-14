@@ -8,7 +8,8 @@ from .interfaces import Source, Mapper, Target, StateStore, SyncLogger
 class SyncJob:
     # https://chatgpt.com/c/690e4884-b0e0-832e-8bdd-0296f3498a42
     def __init__(self, stream: str, source: Source, mapper: Mapper, target: Target,
-                 state: StateStore, logger: SyncLogger, max_attempts: int = 3):
+                 state: StateStore, logger: SyncLogger, max_attempts: int = 3,
+                 checkpoint_save_every: int = 1000):
         self.stream = stream          # имя потока синка, для чекпоинта
         self.source = source          # откуда читаем внешние данные
         self.mapper = mapper          # чем преобразуем во внутреннюю проекцию
@@ -16,65 +17,77 @@ class SyncJob:
         self.state = state            # “память синхронизации” (чекпоинты и биндинги)
         self.logger = logger          # логирование событий синка
         self.max_attempts = max_attempts
+        self.checkpoint_save_every = max(1, checkpoint_save_every)
         self._last_fetch_checkpoint: Optional[str] = None
+        self._checkpoint_getter: Optional[Callable[[], Optional[str]]] = None
+        self._last_saved_checkpoint: Optional[str] = None
+        self._processed_since_save = 0
 
     def run(self) -> SyncResult:
         checkpoint: Optional[str] = self.state.get_checkpoint(self.stream)
         sync_result = SyncResult()
         has_retryable_temp_errors = False  # есть ли что ретраить
+        self._checkpoint_getter = None
+        self._last_saved_checkpoint = None
+        self._processed_since_save = 0
 
         items: Iterable[tuple[ExternalKey, Payload]] = self._iter_source_items(checkpoint)
         for key, payload in items:
-            stored_state: Optional[SyncItemState] = self.state.get_item_state(key)
-            prev_state: Optional[SyncItemState] = (
-                stored_state
-                if stored_state is not None and stored_state.version == payload.version
-                else None
-            )
-
-            if prev_state is not None:  # не трогаем PERM_ERROR и превышенные попытки
-                if prev_state.status is SyncItemStatus.PERM_ERROR:
-                    self.logger.on_skipped(key, "perm_error")
-                    sync_result = sync_result.inc(skipped=1)
-                    continue
-                if prev_state.status is SyncItemStatus.TEMP_ERROR and prev_state.attempts >= self.max_attempts:
-                    self.logger.on_skipped(key, "max_attempts")
-                    sync_result = sync_result.inc(skipped=1)
-                    continue
-
             try:
-                sync_result = self._process_item(
-                    key=key, payload=payload, prev_state=prev_state, sync_result=sync_result)
+                stored_state: Optional[SyncItemState] = self.state.get_item_state(key)
+                prev_state: Optional[SyncItemState] = (
+                    stored_state
+                    if stored_state is not None and stored_state.version == payload.version
+                    else None
+                )
 
-            except TemporaryError as exc:
-                # посчитаем попытку и решим, нужен ли ещё ретрай
-                attempts_before = prev_state.attempts if prev_state else 0
-                attempts_after = attempts_before + 1
-                if attempts_after < self.max_attempts:
-                    has_retryable_temp_errors = True
+                if prev_state is not None:  # не трогаем PERM_ERROR и превышенные попытки
+                    if prev_state.status is SyncItemStatus.PERM_ERROR:
+                        self.logger.on_skipped(key, "perm_error")
+                        sync_result = sync_result.inc(skipped=1)
+                        continue
+                    if prev_state.status is SyncItemStatus.TEMP_ERROR and prev_state.attempts >= self.max_attempts:
+                        self.logger.on_skipped(key, "max_attempts")
+                        sync_result = sync_result.inc(skipped=1)
+                        continue
 
-                self._save_failed_state(
-                    key=key, payload=payload, prev_state=prev_state, status=SyncItemStatus.TEMP_ERROR, exc=exc)
-                sync_result = sync_result.inc(failed=1)
-                self.logger.on_error(key, exc)
-                continue
+                try:
+                    sync_result = self._process_item(
+                        key=key, payload=payload, prev_state=prev_state, sync_result=sync_result)
 
-            except PermanentError as exc:
-                self._save_failed_state(
-                    key=key, payload=payload, prev_state=prev_state, status=SyncItemStatus.PERM_ERROR, exc=exc)
-                sync_result = sync_result.inc(failed=1)
-                self.logger.on_error(key, exc)
-                continue
+                except TemporaryError as exc:
+                    # посчитаем попытку и решим, нужен ли ещё ретрай
+                    attempts_before = prev_state.attempts if prev_state else 0
+                    attempts_after = attempts_before + 1
+                    if attempts_after < self.max_attempts:
+                        has_retryable_temp_errors = True
 
-            except SyncError as exc:
-                # todo должно отличаться от PermanentError
-                self._save_failed_state(
-                    key=key, payload=payload, prev_state=prev_state, status=SyncItemStatus.PERM_ERROR, exc=exc)
-                sync_result = sync_result.inc(failed=1)
-                self.logger.on_error(key, exc)
-                continue
+                    self._save_failed_state(
+                        key=key, payload=payload, prev_state=prev_state, status=SyncItemStatus.TEMP_ERROR, exc=exc)
+                    sync_result = sync_result.inc(failed=1)
+                    self.logger.on_error(key, exc)
+                    continue
+
+                except PermanentError as exc:
+                    self._save_failed_state(
+                        key=key, payload=payload, prev_state=prev_state, status=SyncItemStatus.PERM_ERROR, exc=exc)
+                    sync_result = sync_result.inc(failed=1)
+                    self.logger.on_error(key, exc)
+                    continue
+
+                except SyncError as exc:
+                    # todo должно отличаться от PermanentError
+                    self._save_failed_state(
+                        key=key, payload=payload, prev_state=prev_state, status=SyncItemStatus.PERM_ERROR, exc=exc)
+                    sync_result = sync_result.inc(failed=1)
+                    self.logger.on_error(key, exc)
+                    continue
+
+            finally:
+                self._save_checkpoint_progress(has_retryable_temp_errors)
 
         # чекпоинт двигаем только если не осталось TEMP_ERROR с незакрытыми ретраями
+        self._save_checkpoint_progress(has_retryable_temp_errors, force=True)
         if self._last_fetch_checkpoint is not None and not has_retryable_temp_errors:
             self.state.save_checkpoint(self.stream, self._last_fetch_checkpoint)
         return sync_result
@@ -149,15 +162,35 @@ class SyncJob:
         try:
             items, new_checkpoint = self.source.fetch(checkpoint)  # новый контракт
             if callable(new_checkpoint):
-                for item in items:
-                    yield item
-                self._last_fetch_checkpoint = new_checkpoint()
+                self._checkpoint_getter = new_checkpoint
+                yield from items
             else:
+                self._checkpoint_getter = None
                 self._last_fetch_checkpoint = new_checkpoint          # запоминаем чекпоинт
                 yield from items                                      # остаёмся генератором
         except (TemporarySourceError, PermanentSourceError) as exc:
             self._log_fetch_error(exc)
             raise
+
+    def _save_checkpoint_progress(self, has_retryable_temp_errors: bool, force: bool = False) -> None:
+        if self._checkpoint_getter is None:
+            return
+        self._processed_since_save += 1
+        if not force and self._processed_since_save < self.checkpoint_save_every:
+            return
+        checkpoint = self._checkpoint_getter()
+        if checkpoint is None:
+            return
+        self._last_fetch_checkpoint = checkpoint
+        if has_retryable_temp_errors:
+            self._processed_since_save = 0
+            return
+        if checkpoint == self._last_saved_checkpoint:
+            self._processed_since_save = 0
+            return
+        self.state.save_checkpoint(self.stream, checkpoint)
+        self._last_saved_checkpoint = checkpoint
+        self._processed_since_save = 0
 
     def _log_fetch_error(self, exc: SyncError) -> None:
         """Логируем ошибку на уровне fetch без конкретного элемента."""
