@@ -15,7 +15,7 @@ REGEX_EMAIL = "([A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)
 ASSIGN_USER = 2464
 
 
-USERNAMES = "@avk_its\n\n"
+USERNAMES = "@avk_its @rsk_its\n\n"
 
 
 def debug_point_async(message: Text, with_tags: bool = True, with_traceback: bool = True):
