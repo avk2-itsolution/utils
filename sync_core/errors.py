@@ -2,6 +2,14 @@ class SyncError(Exception):
     """Базовая ошибка синхронизации."""
 
 
+class SkipItem(SyncError):
+    """Skip processing without writing to target."""
+
+    def __init__(self, reason: str = "skip"):
+        self.reason = reason
+        super().__init__(reason)
+
+
 class SourceError(SyncError):
     """Ошибка на уровне источника (доступ, формат, протокол)."""
 

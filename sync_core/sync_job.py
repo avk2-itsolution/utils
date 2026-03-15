@@ -1,7 +1,7 @@
 from typing import Optional, Iterable, Callable
 
 from .dto import SyncResult, Binding, Projection, ExternalKey, Payload, SyncItemState, SyncItemStatus
-from .errors import SyncError, TemporaryError, PermanentError, TemporarySourceError, PermanentSourceError
+from .errors import SyncError, TemporaryError, PermanentError, TemporarySourceError, PermanentSourceError, SkipItem
 from .interfaces import Source, Mapper, Target, StateStore, SyncLogger
 
 
@@ -55,6 +55,11 @@ class SyncJob:
                     sync_result = self._process_item(
                         key=key, payload=payload, prev_state=prev_state, sync_result=sync_result)
 
+                except SkipItem as exc:
+                    self._save_success_state(key, payload, prev_state)
+                    self.logger.on_skipped(key, exc.reason)
+                    sync_result = sync_result.inc(skipped=1)
+                    continue
                 except TemporaryError as exc:
                     # посчитаем попытку и решим, нужен ли ещё ретрай
                     attempts_before = prev_state.attempts if prev_state else 0
