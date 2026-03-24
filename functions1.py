@@ -46,12 +46,12 @@ def debug_point(message: Text, with_tags: bool, tb_text: Optional[str] = None):
         if len(chunk) + len(line) + 1 < 4096:
             chunk += "\n" + line
         else:
-            requests.post(f"https://api.telegram.org/bot{token}/sendMessage", data={"chat_id": chat_id, "text": chunk})
+            requests.post(f"https://ofin1.it-solution.ru/tapi/bot{token}/sendMessage", data={"chat_id": chat_id, "text": chunk})
             chunk = "\n" + line
 
     if chunk.strip():
         requests.post(
-            f"https://api.telegram.org/bot{token}/sendMessage",
+            f"https://ofin1.it-solution.ru/tapi/bot{token}/sendMessage",
             data={"chat_id": chat_id, "text": chunk},
         )
 
