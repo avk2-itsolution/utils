@@ -37,3 +37,7 @@ class BitrixMainAuthAuthentication(BaseAuthentication):
             get_bitrix_user_token_from_header(request=request)
         except InvalidHeader:
             pass  # выше по стеку обработка
+
+
+# Совместимость с настройками DRF DEFAULT_AUTHENTICATION_CLASSES.
+BitrixHeaderAuthentication = BitrixMainAuthAuthentication
