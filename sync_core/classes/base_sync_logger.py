@@ -1,7 +1,7 @@
-from functions1 import debug_point_async
-from sync_core.dto import ExternalKey
-from sync_core.errors import SyncError
-from sync_core.interfaces import SyncLogger
+from ..dto import ExternalKey
+from ..errors import SyncError
+from ..interfaces import SyncLogger
+from ...functions1 import debug_point_async
 
 
 class BaseSyncLogger(SyncLogger):
