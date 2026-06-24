@@ -5,7 +5,7 @@ from typing import Any, Self
 
 from django.contrib import admin
 from django.db import models
-from django_admin_filters import DateRange, DateRangePicker
+from django_admin_filters import DateRange, DateRangePicker  # pip install django-admin-list-filters
 
 from integration_utils.bitrix24.models import BitrixUserToken
 
