@@ -5,6 +5,7 @@ from decimal import Decimal
 from math import ceil
 from typing import Any
 
+from django.contrib import admin
 from django.db import models
 from django.db.models import JSONField
 from django.utils import timezone
@@ -42,6 +43,14 @@ class BitrixBatchCommand(models.Model):
     finished_at = models.DateTimeField(null=True, blank=True)
 
     objects = BitrixBatchCommandQuerySet.as_manager()
+
+    class Admin(admin.ModelAdmin):
+        list_display = ("id", "but", "method", "status", "attempts", "created_at", "finished_at")
+        list_display_links = list_display
+        list_filter = ("status", "but")
+        search_fields = ("method", "group_id", "error", "callback_error")
+        raw_id_fields = ("but",)
+        readonly_fields = ("id", "created_at", "processable_at", "started_at", "finished_at", "callback_finished_at")
 
     class Meta:
         ordering = ["id"]
