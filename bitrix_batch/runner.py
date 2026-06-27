@@ -23,12 +23,11 @@ def process_pending_bitrix_batch_commands(timeout: int = DEFAULT_BATCH_TIMEOUT) 
 def _lock_pending_commands() -> list[BitrixBatchCommand]:
     """Берёт и помечает pending-команды."""
     with transaction.atomic():
-        commands = list(BitrixBatchCommand.objects.lock_pending())
-        if not commands:
-            return []
-
-        for command in commands:
+        commands: list[BitrixBatchCommand] = []
+        queryset = BitrixBatchCommand.objects.lock_pending().for_batch_processing()
+        for command in queryset.iterator():
             command.mark_processing()
+            commands.append(command)
 
         return commands
 
@@ -36,7 +35,12 @@ def _lock_pending_commands() -> list[BitrixBatchCommand]:
 def _process_pending_callbacks() -> int:
     """Дозапускает callback у уже завершённых команд."""
     with transaction.atomic():
-        commands = list(BitrixBatchCommand.objects.lock_callback_pending())
+        commands = list(
+            BitrixBatchCommand.objects
+            .lock_callback_pending()
+            .for_callback_processing()
+            .iterator()
+        )
 
     for command in commands:
         command.run_callback()

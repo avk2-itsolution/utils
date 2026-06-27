@@ -6,6 +6,16 @@ from django.db import connections, models
 class BitrixBatchCommandQuerySet(models.QuerySet):
     """QuerySet очереди batch-команд Bitrix24."""
 
+    ADMIN_DEFER_FIELDS = (
+        "params",
+        "context",
+        "result",
+        "error",
+        "error_payload",
+        "callback_path",
+        "callback_error",
+    )
+
     def pending(self):
         """Возвращает необработанные команды."""
         return self.filter(
@@ -27,6 +37,28 @@ class BitrixBatchCommandQuerySet(models.QuerySet):
         """Возвращает команды с незавершённым callback."""
         return self.exclude(callback_path__isnull=True).exclude(callback_path="").filter(
             callback_finished_at__isnull=True,
+        )
+
+    def for_admin_list(self):
+        """Облегчённый queryset для списка в админке."""
+        return self.select_related("but__user").defer(*self.ADMIN_DEFER_FIELDS)
+
+    def for_batch_processing(self):
+        """Команды для отправки в batch без лишних полей."""
+        return self.select_related("but__user").defer(
+            "context",
+            "result",
+            "callback_error",
+            "callback_finished_at",
+        )
+
+    def for_callback_processing(self):
+        """Команды для выполнения callback."""
+        return self.defer(
+            "error",
+            "callback_error",
+            "started_at",
+            "finished_at",
         )
 
     def lock_pending(self):

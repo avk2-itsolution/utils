@@ -51,6 +51,13 @@ class BitrixBatchCommand(models.Model):
         search_fields = ("method", "group_id", "error", "callback_error")
         raw_id_fields = ("but",)
         readonly_fields = ("id", "created_at", "processable_at", "started_at", "finished_at", "callback_finished_at")
+        list_per_page = 30
+        show_full_result_count = False
+
+        def get_queryset(self, request):
+            """Возвращает облегчённый queryset для списка."""
+            queryset = super().get_queryset(request)
+            return queryset.for_admin_list()
 
     class Meta:
         ordering = ["id"]
