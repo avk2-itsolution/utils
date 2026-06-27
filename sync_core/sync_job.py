@@ -1,6 +1,6 @@
 from typing import Optional, Iterable, Callable
 
-from .dto import SyncResult, Binding, Projection, ExternalKey, Payload, SyncItemState, SyncItemStatus
+from .dto import SyncResult, Binding, Projection, ExternalKey, Payload, SyncItemState, SyncItemStatus, TargetUpsertResult
 from .errors import SyncError, TemporaryError, PermanentError, TemporarySourceError, PermanentSourceError, SkipItem
 from .interfaces import Source, Mapper, Target, StateStore, SyncLogger
 
@@ -26,7 +26,7 @@ class SyncJob:
     def run(self) -> SyncResult:
         checkpoint: Optional[str] = self.state.get_checkpoint(self.stream)
         sync_result = SyncResult()
-        has_retryable_temp_errors = False  # есть ли что ретраить
+        has_retryable_temp_errors = False  # есть ли что блокирует продвижение чекпоинта
         self._checkpoint_getter = None
         self._last_saved_checkpoint = None
         self._processed_since_save = 0
@@ -46,6 +46,11 @@ class SyncJob:
                         self.logger.on_skipped(key, "perm_error")
                         sync_result = sync_result.inc(skipped=1)
                         continue
+                    if prev_state.status is SyncItemStatus.PENDING:
+                        has_retryable_temp_errors = True
+                        self.logger.on_skipped(key, "pending")
+                        sync_result = sync_result.inc(pending=1)
+                        continue
                     if prev_state.status is SyncItemStatus.TEMP_ERROR and prev_state.attempts >= self.max_attempts:
                         self.logger.on_skipped(key, "max_attempts")
                         sync_result = sync_result.inc(skipped=1)
@@ -54,6 +59,9 @@ class SyncJob:
                 try:
                     sync_result = self._process_item(
                         key=key, payload=payload, prev_state=prev_state, sync_result=sync_result)
+
+                    if sync_result.pending > 0:
+                        has_retryable_temp_errors = True
 
                 except SkipItem as exc:
                     self._save_success_state(key, payload, prev_state)
@@ -91,7 +99,7 @@ class SyncJob:
             finally:
                 self._save_checkpoint_progress(has_retryable_temp_errors)
 
-        # чекпоинт двигаем только если не осталось TEMP_ERROR с незакрытыми ретраями
+        # чекпоинт двигаем только если не осталось TEMP_ERROR или PENDING
         self._save_checkpoint_progress(has_retryable_temp_errors, force=True)
         if self._last_fetch_checkpoint is not None and not has_retryable_temp_errors:
             self.state.save_checkpoint(self.stream, self._last_fetch_checkpoint)
@@ -118,7 +126,15 @@ class SyncJob:
         self.mapper.validate(key, payload)  # 2. бизнес-валидация входных данных
         projection: Projection = self.mapper.map(key, payload)  # строим проекцию под целевую систему
         self.target.validate(key, projection)  # 3. валидация перед записью в приёмник
-        internal_id = self.target.upsert(key, projection, binding=bound)  # создаём/обновляем сущность в целевой системе
+        target_result: TargetUpsertResult = self.target.upsert(
+            key, projection, binding=bound, version=payload.version)  # создаём/обновляем сущность в целевой системе
+
+        if target_result.is_deferred:
+            self._save_pending_state(key, payload, prev_state)
+            self.logger.on_skipped(key, "pending")
+            return sync_result.inc(pending=1)
+
+        internal_id = target_result.get_internal_id()
         self.state.bind(key, internal_id, payload.version)  # сохраняем связь ExternalKey ↔ internal_id, version
 
         self._save_success_state(key, payload, prev_state)
@@ -137,6 +153,18 @@ class SyncJob:
                 key=key,
                 version=payload.version,
                 status=SyncItemStatus.SUCCESS,
+                attempts=attempts,
+                last_error=None,
+            )
+        )
+
+    def _save_pending_state(self, key: ExternalKey, payload: Payload, prev_state: Optional[SyncItemState]) -> None:
+        attempts = (prev_state.attempts + 1) if prev_state else 1
+        self.state.save_item_state(
+            SyncItemState(
+                key=key,
+                version=payload.version,
+                status=SyncItemStatus.PENDING,
                 attempts=attempts,
                 last_error=None,
             )

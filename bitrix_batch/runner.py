@@ -65,7 +65,8 @@ class BitrixCommandBatch:
             if str(command.id) in batch_result.successes:
                 command.mark_success(batch_result.successes[str(command.id)])
             elif str(command.id) in batch_result.errors:
-                command.mark_error(str(batch_result.errors[str(command.id)]))
+                error_payload = batch_result.errors[str(command.id)]
+                command.mark_error(str(error_payload), error_payload=error_payload)
             else:
                 command.mark_error("No batch result returned from Bitrix")
 

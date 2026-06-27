@@ -11,10 +11,11 @@ class SyncResult:
     created: int = 0
     updated: int = 0
     skipped: int = 0
+    pending: int = 0
     failed: int = 0
     started_at: datetime = datetime.utcnow()  # при необходимости можно заменить на default_factory  # TODO
 
-    def inc(self, *, created: int = 0, updated: int = 0, skipped: int = 0, failed: int = 0,
+    def inc(self, *, created: int = 0, updated: int = 0, skipped: int = 0, pending: int = 0, failed: int = 0,
             ) -> SelfSyncResult:
         """Возвращает новый SyncResult с увеличенными счётчиками."""
         return replace(
@@ -22,6 +23,7 @@ class SyncResult:
             created=self.created + created,
             updated=self.updated + updated,
             skipped=self.skipped + skipped,
+            pending=self.pending + pending,
             failed=self.failed + failed,
         )
 

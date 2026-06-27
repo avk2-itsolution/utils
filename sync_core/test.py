@@ -25,7 +25,7 @@ class SyncCheckpointModel(models.Model):
 # sync_core/state_store.py
 from typing import Optional
 
-from .dto import ExternalKey, Binding, SyncResult
+from .dto import ExternalKey, Binding, SyncResult, TargetUpsertResult
 
 
 class DjangoStateStore(StateStore):
@@ -137,7 +137,7 @@ class BxActivityTarget(Target):
     def __init__(self, but):
         self.but = but  # BitrixUserToken
 
-    def upsert(self, key: ExternalKey, projection: Projection) -> str:
+    def upsert(self, key: ExternalKey, projection: Projection, binding=None, version=None) -> TargetUpsertResult:
         assert projection.kind == "activity"
         fields = dict(projection.fields)
 
@@ -157,12 +157,12 @@ class BxActivityTarget(Target):
             self.but.call_api_method(
                 "crm.activity.update", {"id": act_id, "fields": fields}
             )
-            return str(act_id)
+            return TargetUpsertResult.completed(str(act_id))
 
         created = self.but.call_api_method(
             "crm.activity.add", {"fields": fields}
         )
-        return str(created["result"])
+        return TargetUpsertResult.completed(str(created["result"]))
 
 
 def sync_tickets_to_bx_activities() -> SyncResult:

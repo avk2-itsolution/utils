@@ -1,15 +1,17 @@
 from typing import Protocol, Optional
 
-from ..dto import ExternalKey, Projection, Binding
+from ..dto import Binding, ExternalKey, Projection, TargetUpsertResult
 from ..dto.projection import TTarget
 
 
 class Target(Protocol[TTarget]):
     """Приёмник, выполняющий upsert проекций во внутреннюю систему."""
 
-    def upsert(self, key: ExternalKey, projection: Projection[TTarget], binding: Optional[Binding] = None) -> str:
-        """Создаёт/обновляет сущность по projection, связав её с key, и возвращает internal_id.
-        binding — сохранённый Binding для ключа, если он есть (используется для различения create/update).
+    def upsert(
+            self, key: ExternalKey, projection: Projection[TTarget], binding: Optional[Binding] = None, version: str | None = None
+    ) -> TargetUpsertResult:
+        """Создаёт/обновляет сущность по projection и возвращает TargetUpsertResult.
+        binding — сохранённый Binding для ключа, если он есть.
         """
         ...  # возвращает внутренний id
 

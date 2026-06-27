@@ -88,3 +88,22 @@ class BaseStateStore(StateStore):
                 "last_error": state.last_error or "",
             },
         )
+
+    def set_item_state(
+        self,
+        *,
+        key: ExternalKey,
+        version: Optional[str],
+        status: SyncItemStatus,
+        attempts: int,
+        last_error: Optional[str] = None,
+    ) -> None:
+        self.save_item_state(
+            SyncItemState(
+                key=key,
+                version=version,
+                status=status,
+                attempts=attempts,
+                last_error=last_error,
+            )
+        )

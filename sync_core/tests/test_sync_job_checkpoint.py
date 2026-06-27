@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import unittest
 
-from sync_utils.sync_core.dto import ExternalKey, Payload, Projection, SyncItemState, SyncItemStatus
-from sync_utils.sync_core.errors import TemporaryError
-from sync_utils.sync_core.sync_job import SyncJob
+from utils.sync_core.dto import ExternalKey, Payload, Projection, SyncItemState, SyncItemStatus, TargetUpsertResult
+from utils.sync_core.errors import TemporaryError
+from utils.sync_core.sync_job import SyncJob
 
 
 class DummySource:
@@ -39,10 +39,18 @@ class DummyTarget:
     def validate(self, key, projection):
         return None
 
-    def upsert(self, key, projection, binding=None):
+    def upsert(self, key, projection, binding=None, version=None):
         if key.key == self.fail_on:
             raise TemporaryError("temp fail")
-        return f"internal-{key.key}"
+        return TargetUpsertResult.completed(f"internal-{key.key}")
+
+
+class DummyDeferredTarget:
+    def validate(self, key, projection):
+        return None
+
+    def upsert(self, key, projection, binding=None, version=None):
+        return TargetUpsertResult.deferred(command_id=int(key.key))
 
 
 class DummyStateStore:
@@ -125,6 +133,26 @@ class SyncJobCheckpointTest(unittest.TestCase):
         saved_state = state.item_states["2"]
         self.assertEqual(saved_state.status, SyncItemStatus.TEMP_ERROR)
         self.assertEqual(saved_state.attempts, 1)
+
+    def test_deferred_item_becomes_pending_and_blocks_checkpoint(self):
+        state = DummyStateStore()
+        job = SyncJob(
+            stream="s",
+            source=DummySource(count=2),
+            mapper=DummyMapper(),
+            target=DummyDeferredTarget(),
+            state=state,
+            logger=DummyLogger(),
+            checkpoint_save_every=1,
+        )
+
+        result = job.run()
+
+        self.assertEqual(state.saved_checkpoints, [])
+        self.assertEqual(result.pending, 2)
+        self.assertEqual(result.skipped, 0)
+        self.assertEqual(state.item_states["1"].status, SyncItemStatus.PENDING)
+        self.assertEqual(state.item_states["2"].status, SyncItemStatus.PENDING)
 
 
 if __name__ == "__main__":

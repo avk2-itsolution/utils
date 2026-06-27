@@ -6,3 +6,4 @@ from .projection import Projection
 from .sync_result import SyncResult
 from .sync_item_state import SyncItemState
 from .sync_item_status import SyncItemStatus
+from .target_upsert_result import TargetUpsertResult
