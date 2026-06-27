@@ -1,6 +1,6 @@
 from django.utils import timezone
 
-from django.db import models
+from django.db import connections, models
 
 
 class BitrixBatchCommandQuerySet(models.QuerySet):
@@ -15,7 +15,7 @@ class BitrixBatchCommandQuerySet(models.QuerySet):
 
     def ordered_for_processing(self):
         """Сортирует команды для batch-обработки."""
-        return self.select_related("but").order_by("id")
+        return self.order_by("id")
 
     def finished(self):
         """Возвращает уже завершённые команды."""
@@ -31,16 +31,14 @@ class BitrixBatchCommandQuerySet(models.QuerySet):
 
     def lock_pending(self):
         """Блокирует необработанные команды."""
-        locked_commands = self.select_for_update(skip_locked=True).pending().ordered_for_processing()
-        if locked_commands.first() is None:
-            return self.none()
-
-        return locked_commands
+        return self._lock_rows().pending().ordered_for_processing()
 
     def lock_callback_pending(self):
         """Блокирует завершённые команды с незавершённым callback."""
-        locked_commands = self.select_for_update(skip_locked=True).finished().callback_pending().ordered_for_processing()
-        if locked_commands.first() is None:
-            return self.none()
+        return self._lock_rows().finished().callback_pending().ordered_for_processing()
 
-        return locked_commands
+    def _lock_rows(self):
+        """Блокирует только строки очереди, без связанных таблиц."""
+        if connections[self.db].features.has_select_for_update_of:
+            return self.select_for_update(skip_locked=True, of=("self",))
+        return self.select_for_update(skip_locked=True)
