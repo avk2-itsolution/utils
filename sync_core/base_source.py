@@ -10,6 +10,7 @@ from .errors import TemporarySourceError, PermanentSourceError
 from .interfaces import Source, FetchResult
 
 TSource = TypeVar("TSource")
+TPageItem = TypeVar("TPageItem")
 TItems = Iterable[tuple[ExternalKey, Payload[TSource]]]
 RawCheckpoint = Union[Optional[Any], Callable[[], Optional[Any]]]
 
@@ -81,10 +82,10 @@ class BaseSource(Source[TSource], Generic[TSource], ABC):
     def paginate_eager(
         self,
         start_token: Optional[str],
-        fetch_page: Callable[[Optional[str]], tuple[list, Optional[str]]],
-    ) -> Tuple[list, Optional[str]]:
+        fetch_page: Callable[[Optional[str]], tuple[list[TPageItem], Optional[str]]],
+    ) -> Tuple[list[TPageItem], Optional[str]]:
         """Обходит постраничный API: fetch_page(token) -> (items, next_token)."""
-        items: list = []
+        items: list[TPageItem] = []
         token = start_token
         last_token = start_token
         while True:
@@ -98,8 +99,8 @@ class BaseSource(Source[TSource], Generic[TSource], ABC):
     def paginate_iter(
         self,
         start_token: Optional[str],
-        fetch_page: Callable[[Optional[str]], tuple[list, Optional[str]]],
-    ) -> Tuple[Iterable[tuple], Optional[str]]:
+        fetch_page: Callable[[Optional[str]], tuple[list[TPageItem], Optional[str]]],
+    ) -> Tuple[Iterable[TPageItem], Optional[str]]:
         """Ленивый обход постраничного API: отдаёт генератор пар и последний next_token."""
         last_token = start_token
 
