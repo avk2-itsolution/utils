@@ -1,23 +1,41 @@
+import traceback
+
 from ..dto import ExternalKey
 from ..errors import SyncError
 from ..interfaces import SyncLogger
-from ...functions1 import debug_point_async
 
 
 class BaseSyncLogger(SyncLogger):
-    """Базовая реализация логирования событий синхронизации."""
+    """Базовый логгер событий синхронизации."""
+
+    def __init__(self, *, error_place: str = "sync_core"):
+        self.error_place = error_place
 
     def on_skipped(self, key: ExternalKey, reason: str) -> None:
-        debug_point_async(f"[skip] {key} {reason}", with_tags=False, with_traceback=False)
+        from utils.admin_logger.models import Log
+
+        Log.warning(f"[skip] {key} {reason}", error_place=self.error_place)
 
     def on_created(self, key: ExternalKey, internal_id: str) -> None:
-        debug_point_async(f"[create] {key} -> {internal_id}", with_tags=False, with_traceback=False)
+        from utils.admin_logger.models import Log
+
+        Log.warning(f"[create] {key} -> {internal_id}", error_place=self.error_place)
 
     def on_updated(self, key: ExternalKey, internal_id: str) -> None:
-        debug_point_async(f"[update] {key} -> {internal_id}", with_tags=False, with_traceback=False)
+        from utils.admin_logger.models import Log
+
+        Log.warning(f"[update] {key} -> {internal_id}", error_place=self.error_place)
 
     def on_deleted(self, key: ExternalKey, internal_id: str) -> None:
-        debug_point_async(f"[delete] {key} -> {internal_id}", with_tags=False, with_traceback=False)
+        from utils.admin_logger.models import Log
+
+        Log.warning(f"[delete] {key} -> {internal_id}", error_place=self.error_place)
 
     def on_error(self, key: ExternalKey, exc: SyncError) -> None:
-        debug_point_async(f"[error] {key} {exc}", with_tags=True, with_traceback=True)
+        from utils.admin_logger.models import Log
+
+        Log.error(
+            f"[error] {key} {exc}",
+            error_place=self.error_place,
+            traceback_text=traceback.format_exc(),
+        )
