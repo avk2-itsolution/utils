@@ -14,7 +14,6 @@ class AbstractSyncBinding(models.Model):
 
     class Admin(admin.ModelAdmin):
         list_display = ("system", "ext_key", "internal_id", "version")
-        actions = None
 
 
 class AbstractSyncCheckpoint(models.Model):
@@ -26,7 +25,6 @@ class AbstractSyncCheckpoint(models.Model):
 
     class Admin(admin.ModelAdmin):
         list_display = ("stream", "token",)
-        actions = None
 
 
 class AbstractSyncItemState(models.Model):
@@ -47,7 +45,6 @@ class AbstractSyncItemState(models.Model):
         search_fields = ("ext_key", "version", "last_error")
         ordering = ("system", "ext_key")
         list_per_page = 50
-        actions = None
 
         @admin.display(description="last_error")
         def error_excerpt(self, obj):
