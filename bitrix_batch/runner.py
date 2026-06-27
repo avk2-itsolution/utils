@@ -7,6 +7,7 @@ from utils.bitrix_batch.models import BitrixBatchCommand
 
 
 DEFAULT_BATCH_TIMEOUT = 240
+PROCESSING_WINDOW_SIZE = 100
 
 
 def process_pending_bitrix_batch_commands(timeout: int = DEFAULT_BATCH_TIMEOUT) -> int:
@@ -24,8 +25,8 @@ def _lock_pending_commands() -> list[BitrixBatchCommand]:
     """Берёт и помечает pending-команды."""
     with transaction.atomic():
         commands: list[BitrixBatchCommand] = []
-        queryset = BitrixBatchCommand.objects.lock_pending().for_batch_processing()
-        for command in queryset.iterator():
+        queryset = BitrixBatchCommand.objects.lock_pending().for_batch_processing()[:PROCESSING_WINDOW_SIZE]
+        for command in queryset:
             command.mark_processing()
             commands.append(command)
 
@@ -39,7 +40,7 @@ def _process_pending_callbacks() -> int:
             BitrixBatchCommand.objects
             .lock_callback_pending()
             .for_callback_processing()
-            .iterator()
+            [:PROCESSING_WINDOW_SIZE]
         )
 
     for command in commands:
