@@ -1,13 +1,12 @@
-import json
 import time
 from collections.abc import Callable
-from datetime import timedelta
+from datetime import date, datetime, time as dt_time, timedelta
+from decimal import Decimal
 from math import ceil
 from typing import Any
 
 from django.db import models
 from django.db.models import JSONField
-from django.core.serializers.json import DjangoJSONEncoder
 from django.utils import timezone
 from django.utils.module_loading import import_string
 
@@ -227,5 +226,26 @@ class BitrixBatchCommand(models.Model):
     @staticmethod
     def _normalize_json_value(value: Any) -> Any:
         """Приводит значение к виду, совместимому с JSONField."""
+        if value is None or isinstance(value, bool | int | float | str):
+            return value
 
-        return json.loads(json.dumps(value, cls=DjangoJSONEncoder))
+        if isinstance(value, Decimal):
+            if value == value.to_integral_value():
+                return int(value)
+            return float(value)
+
+        if isinstance(value, datetime | date | dt_time):
+            return value.isoformat()
+
+        if isinstance(value, list | tuple):
+            return [BitrixBatchCommand._normalize_json_value(item) for item in value]
+
+        if isinstance(value, dict):
+            normalized: dict[str, Any] = {}
+            for key, item in value.items():
+                if not isinstance(key, str):
+                    raise TypeError("JSONField dict keys must be strings")
+                normalized[key] = BitrixBatchCommand._normalize_json_value(item)
+            return normalized
+
+        raise TypeError(f"Unsupported JSONField value type: {type(value)!r}")

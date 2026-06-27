@@ -6,7 +6,10 @@ from integration_utils.bitrix24.exceptions import BatchApiCallError
 from utils.bitrix_batch.models import BitrixBatchCommand
 
 
-def process_pending_bitrix_batch_commands(timeout: int = 10) -> int:
+DEFAULT_BATCH_TIMEOUT = 240
+
+
+def process_pending_bitrix_batch_commands(timeout: int = DEFAULT_BATCH_TIMEOUT) -> int:
     """Берёт необработанные команды, шлёт их батчами и сохраняет результаты."""
     pending_commands: list[BitrixBatchCommand] = _lock_pending_commands()
     batch = BitrixCommandBatch.fabric(pending_commands, timeout=timeout)

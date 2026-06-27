@@ -1,21 +1,26 @@
+from django import forms
 from django.contrib import admin
-
-import django
-if django.VERSION[0] >= 4:
-    from django.db.models import JSONField
-else:
-    from django.contrib.postgres.fields import JSONField
 
 from prettyjson import PrettyJSONWidget
 
 from utils.bitrix_batch.models import BitrixBatchCommand
 
 
+class BitrixBatchCommandAdminForm(forms.ModelForm):
+    class Meta:
+        model = BitrixBatchCommand
+        fields = "__all__"
+        widgets = {
+            "params": PrettyJSONWidget(attrs={"initial": "parsed"}),
+            "context": PrettyJSONWidget(attrs={"initial": "parsed"}),
+            "result": PrettyJSONWidget(attrs={"initial": "parsed"}),
+            "error_payload": PrettyJSONWidget(attrs={"initial": "parsed"}),
+        }
+
+
 @admin.register(BitrixBatchCommand)
 class BitrixBatchCommandAdmin(admin.ModelAdmin):
-    formfield_overrides = {
-        JSONField: {"widget": PrettyJSONWidget},
-    }
+    form = BitrixBatchCommandAdminForm
     readonly_fields = ["id", "created_at", "started_at", "finished_at"]
     list_display = ("id", "but", "method", "status", "attempts", "created_at", "finished_at")
     list_display_links = list_display
