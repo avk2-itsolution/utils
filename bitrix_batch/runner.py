@@ -11,9 +11,13 @@ DEFAULT_BATCH_TIMEOUT = 240
 
 def process_pending_bitrix_batch_commands(timeout: int = DEFAULT_BATCH_TIMEOUT) -> int:
     """Берёт необработанные команды, шлёт их батчами и сохраняет результаты."""
+    processed_callbacks = _process_pending_callbacks()
     pending_commands: list[BitrixBatchCommand] = _lock_pending_commands()
+    if not pending_commands:
+        return processed_callbacks
+
     batch = BitrixCommandBatch.fabric(pending_commands, timeout=timeout)
-    return batch.process()
+    return processed_callbacks + batch.process()
 
 
 def _lock_pending_commands() -> list[BitrixBatchCommand]:
@@ -27,6 +31,17 @@ def _lock_pending_commands() -> list[BitrixBatchCommand]:
             command.mark_processing()
 
         return commands
+
+
+def _process_pending_callbacks() -> int:
+    """Дозапускает callback у уже завершённых команд."""
+    with transaction.atomic():
+        commands = list(BitrixBatchCommand.objects.lock_callback_pending())
+
+    for command in commands:
+        command.run_callback()
+
+    return len(commands)
 
 
 @dataclass
@@ -47,6 +62,9 @@ class BitrixCommandBatch:
 
     def process(self) -> int:
         """Отправляет команды и сохраняет результаты."""
+        if not self.commands:
+            return 0
+
         try:
             batch_result = self.but.batch_api_call(
                 [
