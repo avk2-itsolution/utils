@@ -11,7 +11,7 @@ from typing import Text, Any, Optional
 from django.conf import settings
 
 
-REGEX_EMAIL = "([A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)"
+REGEX_EMAIL = r"([A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)"
 ASSIGN_USER = 2464
 
 
