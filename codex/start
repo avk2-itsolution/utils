@@ -1,0 +1,1 @@
+powershell -NoProfile -ExecutionPolicy Bypass -File .\utils\codex\sync-preprompts-to-codex.ps1
