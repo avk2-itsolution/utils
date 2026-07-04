@@ -150,3 +150,25 @@ but.call_api_method("crm.activity.add", task_data)
 Риски / не проверено:
 Следующий шаг:
 ```
+
+## Production Read-Only Access
+
+Для чтения данных портала и production database используй только read-only MCP tools.
+
+Запрещено:
+
+- использовать production credentials приложения;
+- использовать admin webhook/token;
+- использовать write-capable Bitrix24 token;
+- запускать Django management commands против prod DB;
+- выполнять SQL вне read-only MCP или read-only DB user;
+- вызывать методы портала с записью: add, update, delete, set, bind, unbind, upload, import.
+
+Разрешено:
+
+- читать структуру данных;
+- выполнять ограниченные SELECT-запросы;
+- читать portal entities через allowlisted read methods;
+- использовать данные только для диагностики, анализа и разработки.
+
+Если read-only tool не даёт нужные данные — остановись и опиши, какого доступа не хватает.
