@@ -1,0 +1,1 @@
+from .base_productrow_object import BaseProductRowObject

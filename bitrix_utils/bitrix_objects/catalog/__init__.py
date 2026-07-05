@@ -1,0 +1,4 @@
+from .base_catalog_object import BaseCatalogObject
+from .base_product_object import BaseProductObject
+from .base_measure_object import BaseMeasureObject
+from .base_section_object import BaseSectionObject

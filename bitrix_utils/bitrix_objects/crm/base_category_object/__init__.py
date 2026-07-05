@@ -1,0 +1,2 @@
+from .base_category_object import BaseCategoryObject
+from .base_deal_category_object import BaseDealCategoryObject

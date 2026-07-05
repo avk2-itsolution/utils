@@ -1,0 +1,1 @@
+from .base_department_object import BaseDepartmentObject

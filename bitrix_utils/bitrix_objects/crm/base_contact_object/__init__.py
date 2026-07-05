@@ -1,0 +1,1 @@
+from .base_contact_object import BaseContactObject

@@ -1,0 +1,1 @@
+from .base_product_object import BaseProductObject

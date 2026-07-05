@@ -1,0 +1,1 @@
+from .base_catalog_object import BaseCatalogObject
