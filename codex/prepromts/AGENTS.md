@@ -56,6 +56,12 @@ frontend-architecture
 sync-core-style
 ```
 
+Bitrix object классы, `bitrix_objects_local`, `utils.bitrix_utils`, CRM smart process fields и связи:
+
+```text
+bitrix-objects-style
+```
+
 Управляемая итеративная разработка: реализация фич, доработка кода, диагностика, bugfix, refactor, тесты, проверки и повторные попытки:
 
 ```text
@@ -70,6 +76,7 @@ loop-engineering
 loop-engineering + django-backend-style
 loop-engineering + frontend-architecture
 loop-engineering + django-backend-style + sync-core-style
+loop-engineering + django-backend-style + bitrix-objects-style
 ```
 
 `loop-engineering` отвечает за процесс работы.
