@@ -56,6 +56,12 @@ frontend-architecture
 sync-core-style
 ```
 
+Роботы БП Bitrix24 на `integration_utils.bitrix_robots.models.BaseRobot`, `PROPERTIES`, `RETURN_PROPERTIES`, `process()`, install/uninstall handlers:
+
+```text
+bitrix-robots-style
+```
+
 Управляемая итеративная разработка: реализация фич, доработка кода, диагностика, bugfix, refactor, тесты, проверки и повторные попытки:
 
 ```text
@@ -70,6 +76,7 @@ loop-engineering
 loop-engineering + django-backend-style
 loop-engineering + frontend-architecture
 loop-engineering + django-backend-style + sync-core-style
+loop-engineering + django-backend-style + bitrix-robots-style
 ```
 
 `loop-engineering` отвечает за процесс работы.
