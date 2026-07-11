@@ -131,6 +131,8 @@ Views, serializers, webhooks, robots, crons, tasks, handlers и management comma
 - преобразовать известные исключения в response;
 - вернуть результат.
 
+Для endpoint с несколькими операциями из одного URL-декларатива разрешён минимальный роутинг в одном `APIView`: parse `operation` -> `match`/`if` -> метод операции. Не создавай отдельный view-класс на каждую операцию по умолчанию.
+
 Плохие обязанности transport-слоя:
 
 - защищать бизнес-инварианты;
@@ -140,6 +142,8 @@ Views, serializers, webhooks, robots, crons, tasks, handlers и management comma
 
 Бизнес-логика не должна жить во view или cron.
 
+Операционный `StrEnum` и его список доступных операций должен жить на transport-границе как контракт маршрутизации.
+
 ## DTO И Integrations
 
 Используй DTO на реальных границах:
@@ -148,6 +152,8 @@ Views, serializers, webhooks, robots, crons, tasks, handlers и management comma
 - результаты парсинга;
 - вход или результат сложного сценария;
 - данные синхронизации.
+
+Для валидируемых входов допустимо хранить factory/parsing в самом DTO (`from_query_params`, `from_payload`) — метод возвращает DTO или бросает ошибку.
 
 Не протаскивай сырой внешний `dict` через приложение. Нормализуй данные рядом с границей.
 
@@ -162,6 +168,8 @@ Views, serializers, webhooks, robots, crons, tasks, handlers и management comma
 Не скрывай ошибки через `pass`, молчаливый fallback или необоснованный `return None`.
 
 Лучше упасть с понятной ошибкой, чем продолжить с некорректными данными.
+
+Не возвращай `Response` из сервисного/доменного уровня; туда попадают только исключения, а HTTP-ответ формируется во `view`.
 
 Разделяй:
 
