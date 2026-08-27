@@ -9,8 +9,8 @@ from django_admin_filters import DateRange, DateRangePicker  # pip install djang
 
 from integration_utils.bitrix24.models import BitrixUserToken
 
-from utils.cron_run_result import CronRunResult
-from utils.functions1 import debug_point_async
+from ...cron_run_result import CronRunResult
+from ...functions1 import debug_point_async
 
 USER_IDS_FOR_NOTIFICATION = []
 
