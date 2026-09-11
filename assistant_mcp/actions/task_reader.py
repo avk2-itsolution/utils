@@ -20,6 +20,13 @@ class ActionError(ValueError):
         return {"error": self.error, **self.details}
 
 
+def reject_unknown_arguments(arguments: Mapping[str, Any], allowed: set[str]) -> None:
+    """Enforce the ``additionalProperties: false`` promise in tool schemas."""
+    unknown = sorted(set(arguments) - allowed)
+    if unknown:
+        raise ActionError("unknown_argument", param=unknown[0])
+
+
 class TaskOperation(StrEnum):
     GET_BY_ID = "get_by_id"
     SEARCH_BY_DESCRIPTION = "search_by_description"
@@ -123,6 +130,7 @@ class TaskReaderAction:
             return McpToolResult(exc.to_payload(), is_error=True)
 
     def parse_arguments(self, arguments: Mapping[str, Any]) -> TaskReaderParams:
+        reject_unknown_arguments(arguments, {"operation", "task_id", "q", "limit"})
         operation_value = arguments.get("operation")
         try:
             operation = TaskOperation(operation_value)

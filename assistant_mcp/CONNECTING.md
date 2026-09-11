@@ -90,8 +90,9 @@ MCP_TASKS_BEARER_TOKEN = env("MCP_TASKS_BEARER_TOKEN")
 MCP_TASKS_ALLOWED_ORIGINS = ("https://assistant.example",)
 ```
 
-`MCP_TASKS_BEARER_TOKEN` защищает все MCP-вызовы. `MCP_TASKS_ALLOWED_ORIGINS`
-нужен только для browser-origin запросов; запросы без `Origin` не блокируются.
+`MCP_TASKS_BEARER_TOKEN` защищает MCP endpoint и legacy readers с данными
+(`tasks/...`, `business-processes/...`). `MCP_TASKS_ALLOWED_ORIGINS` нужен
+только для browser-origin запросов; запросы без `Origin` не блокируются.
 
 ## 4. Собрать server
 

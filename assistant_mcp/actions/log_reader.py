@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from typing import Any, Protocol
 
 from ..server import McpTool, McpToolResult
-from .task_reader import ActionError
+from .task_reader import ActionError, reject_unknown_arguments
 
 
 class LogSource(Protocol):
@@ -69,6 +69,13 @@ class LogReaderAction:
 
     def execute(self, arguments: Mapping[str, Any]) -> McpToolResult:
         try:
+            reject_unknown_arguments(
+                arguments,
+                {
+                    "log_id", "q", "application", "levels", "period", "date_from",
+                    "date_to", "before_id", "limit", "include_traceback",
+                },
+            )
             return McpToolResult(self.source.execute(arguments))
         except ActionError as exc:
             return McpToolResult(exc.to_payload(), is_error=True)

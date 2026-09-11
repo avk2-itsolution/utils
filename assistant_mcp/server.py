@@ -62,7 +62,7 @@ class McpServer:
 
         request_id = message.get("id")
         method = message.get("method")
-        if not method:
+        if not isinstance(method, str) or not method:
             return self.error_response(request_id, -32600, "Method is required")
         if method.startswith("notifications/"):
             return None

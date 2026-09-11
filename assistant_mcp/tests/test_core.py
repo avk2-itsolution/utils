@@ -67,6 +67,16 @@ class ActionContractTest(unittest.TestCase):
         self.assertFalse(result.is_error)
         self.assertEqual(result.value, {"source": "fake", "task_id": 7})
 
+    def test_actions_reject_unknown_arguments_promised_by_schema(self):
+        result = TaskReaderAction(FakeTaskSource()).execute(
+            {"operation": "get_by_id", "task_id": 7, "unexpected": True}
+        )
+        self.assertTrue(result.is_error)
+        self.assertEqual(
+            result.value,
+            {"error": "unknown_argument", "param": "unexpected"},
+        )
+
     def test_business_process_schema_only_advertises_source_capabilities(self):
         action = BusinessProcessReaderAction(FakeBusinessProcessSource())
 
@@ -116,6 +126,12 @@ class McpServerTest(unittest.TestCase):
         )
         self.assertFalse(called["result"]["isError"])
         self.assertEqual(called["result"]["structuredContent"]["task_id"], 7)
+
+    def test_rejects_non_string_json_rpc_method(self):
+        response = self.server.handle_message(
+            {"jsonrpc": "2.0", "id": 1, "method": 42}
+        )
+        self.assertEqual(response["error"]["code"], -32600)
 
 
 if __name__ == "__main__":

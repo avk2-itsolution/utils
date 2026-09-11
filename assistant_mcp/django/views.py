@@ -41,7 +41,24 @@ class McpHttpView(McpServerBoundView):
     parser_classes = [JSONParser]
 
     def post(self, request: Request) -> Response:
-        server = self.build_server()
+        try:
+            server = self.build_server()
+        except McpConfigurationError as exc:
+            return Response(
+                McpServer.error_response(
+                    None,
+                    -32603,
+                    "Configuration error",
+                    {"error": "configuration_error", "detail": str(exc)},
+                ),
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except Exception as exc:
+            self.log_exception("assistant_mcp.django.server_build", exc)
+            return Response(
+                McpServer.error_response(None, -32603, "Internal error"),
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
         try:
             message = request.data
         except ParseError:
@@ -97,7 +114,7 @@ class ToolRestView(McpServerBoundView):
     def execute_tool(self, server: McpServer, arguments: dict[str, Any]) -> McpToolResult:
         tool = server.tools.get(self.tool_name)
         if tool is None:
-            return McpToolResult({"error": f"{self.tool_name}_disabled"}, is_error=True)
+            return McpToolResult({"error": self.disabled_error()}, is_error=True)
         result = tool.handler(arguments)
         return result if isinstance(result, McpToolResult) else McpToolResult(result)
 
@@ -112,7 +129,10 @@ class ToolRestView(McpServerBoundView):
             return status.HTTP_422_UNPROCESSABLE_ENTITY
         if error == "bitrix_rest_error":
             return status.HTTP_502_BAD_GATEWAY
-        if error in {"missing_group_id", "invalid_group_id", "configuration_error"}:
+        if error in {
+            "missing_group_id", "invalid_group_id", "configuration_error",
+            "task_reader_disabled", "business_process_reader_disabled",
+        }:
             return status.HTTP_503_SERVICE_UNAVAILABLE
         if error in {"operation_not_supported", "operation_not_implemented"}:
             return status.HTTP_501_NOT_IMPLEMENTED
@@ -120,15 +140,26 @@ class ToolRestView(McpServerBoundView):
             return status.HTTP_500_INTERNAL_SERVER_ERROR
         return status.HTTP_400_BAD_REQUEST
 
+    def disabled_error(self) -> str:
+        return f"{self.tool_name}_disabled"
+
 
 class TaskReaderView(ToolRestView):
     tool_name = "b24_task_read"
+    authentication_classes = [McpBearerAuthentication]
+    permission_classes = [McpOriginPermission]
+
+    def disabled_error(self) -> str:
+        return "task_reader_disabled"
 
 
 class BusinessProcessReaderView(ToolRestView):
     tool_name = "b24_bizproc_read"
     authentication_classes = [McpBearerAuthentication]
     permission_classes = [McpOriginPermission]
+
+    def disabled_error(self) -> str:
+        return "business_process_reader_disabled"
 
 
 class ManifestView(McpServerBoundView):

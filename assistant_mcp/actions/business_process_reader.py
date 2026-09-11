@@ -6,7 +6,7 @@ from enum import StrEnum
 from typing import Any, Protocol
 
 from ..server import McpTool, McpToolResult
-from .task_reader import ActionError
+from .task_reader import ActionError, reject_unknown_arguments
 
 
 class BusinessProcessOperation(StrEnum):
@@ -124,6 +124,14 @@ class BusinessProcessReaderAction:
         self,
         arguments: Mapping[str, Any],
     ) -> BusinessProcessReaderParams:
+        reject_unknown_arguments(
+            arguments,
+            {
+                "operation", "template_id", "instance_id", "task_id", "workflow_id",
+                "q", "module_id", "entity", "document_type", "document_id",
+                "auto_execute", "started_by", "user_id", "status", "limit",
+            },
+        )
         operation_value = arguments.get("operation")
         try:
             operation = BusinessProcessOperation(operation_value)
