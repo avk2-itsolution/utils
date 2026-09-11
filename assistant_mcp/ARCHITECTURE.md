@@ -1,5 +1,8 @@
 # Assistant MCP: подключаемая архитектура
 
+Практическая инструкция с готовыми `urls.py`, token adapter, `MCP_ACTIONS` и
+local registry: [CONNECTING.md](CONNECTING.md).
+
 `assistant_mcp` содержит переносимый MCP transport, общие read-only actions,
 Bitrix REST sources, configuration parser и необязательный Django/DRF HTTP
 adapter. Пакет не импортирует модели портала, Django settings, `get_token_app`
