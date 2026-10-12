@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 from typing import Optional, Iterable, Callable
 
 from .dto import SyncResult, Binding, Projection, ExternalKey, Payload, SyncItemState, SyncItemStatus, TargetUpsertResult
@@ -106,6 +107,24 @@ class SyncJob:
         return sync_result
 
     def _process_item(
+            self, *,
+            key: ExternalKey,
+            payload: Payload,
+            prev_state: Optional[SyncItemState],
+            sync_result: SyncResult,
+    ) -> SyncResult:
+        """Run one item under an optional state-store-specific key lock."""
+        lock_item = getattr(self.state, "lock_item", None)
+        lock = lock_item(key) if callable(lock_item) else nullcontext()
+        with lock:
+            return self._process_item_locked(
+                key=key,
+                payload=payload,
+                prev_state=prev_state,
+                sync_result=sync_result,
+            )
+
+    def _process_item_locked(
             self, *,
             key: ExternalKey,
             payload: Payload,

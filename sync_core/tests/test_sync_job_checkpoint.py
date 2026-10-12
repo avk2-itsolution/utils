@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from contextlib import contextmanager
 
 from utils.sync_core.dto import ExternalKey, Payload, Projection, SyncItemState, SyncItemStatus, TargetUpsertResult
 from utils.sync_core.errors import TemporaryError
@@ -83,6 +84,17 @@ class DummyStateStore:
         self.item_states[state.key.key] = state
 
 
+class LockingStateStore(DummyStateStore):
+    def __init__(self):
+        super().__init__()
+        self.locked_keys: list[str] = []
+
+    @contextmanager
+    def lock_item(self, key):
+        self.locked_keys.append(key.key)
+        yield
+
+
 class DummyLogger:
     def on_skipped(self, key, reason):
         return None
@@ -98,6 +110,21 @@ class DummyLogger:
 
 
 class SyncJobCheckpointTest(unittest.TestCase):
+    def test_uses_optional_per_item_lock(self):
+        state = LockingStateStore()
+        job = SyncJob(
+            stream="s",
+            source=DummySource(count=2),
+            mapper=DummyMapper(),
+            target=DummyTarget(),
+            state=state,
+            logger=DummyLogger(),
+        )
+
+        job.run()
+
+        self.assertEqual(state.locked_keys, ["1", "2"])
+
     def test_deferred_checkpoint_saved_in_batches(self):
         state = DummyStateStore()
         job = SyncJob(
