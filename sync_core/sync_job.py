@@ -113,7 +113,7 @@ class SyncJob:
             prev_state: Optional[SyncItemState],
             sync_result: SyncResult,
     ) -> SyncResult:
-        """Run one item under an optional state-store-specific key lock."""
+        """Обрабатывает элемент с необязательной блокировкой ключа от хранилища."""
         lock_item = getattr(self.state, "lock_item", None)
         lock = lock_item(key) if callable(lock_item) else nullcontext()
         with lock:
