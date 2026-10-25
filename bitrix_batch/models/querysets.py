@@ -46,7 +46,6 @@ class BitrixBatchCommandQuerySet(models.QuerySet):
     def for_batch_processing(self):
         """Команды для отправки в batch без лишних полей."""
         return self.select_related("but__user").defer(
-            "context",
             "result",
             "callback_error",
             "callback_finished_at",

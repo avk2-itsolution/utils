@@ -22,6 +22,7 @@ class BitrixBatchCommand(models.Model):
         PROCESSING = "processing", "Обрабатывается"
         SUCCESS = "success", "Успешно"
         ERROR = "error", "Ошибка"
+        SKIPPED = "skipped", "Пропущено"
 
     but = models.ForeignKey("bitrix24.BitrixUserToken", on_delete=models.PROTECT, related_name="queued_batch_commands")
     group_id = models.CharField(max_length=64, db_index=True, null=True, blank=True)
@@ -33,6 +34,7 @@ class BitrixBatchCommand(models.Model):
     error = models.TextField(null=True, blank=True)
     error_payload = JSONField(null=True, blank=True)
     callback_path = models.CharField(max_length=512, null=True, blank=True)
+    before_send_path = models.CharField(max_length=512, null=True, blank=True)
     callback_error = models.TextField(null=True, blank=True)
     callback_finished_at = models.DateTimeField(null=True, blank=True)
     attempts = models.PositiveIntegerField(default=0)
@@ -80,6 +82,7 @@ class BitrixBatchCommand(models.Model):
         group_id: str | None = None,
         delay_seconds: int = 0,
         callback: Callable[["BitrixBatchCommand"], None] | None = None,
+        before_send: Callable[["BitrixBatchCommand"], bool] | None = None,
     ) -> "BitrixBatchCommand":
         """Ставит команду в очередь."""
         if but is None or but.pk is None:
@@ -95,6 +98,7 @@ class BitrixBatchCommand(models.Model):
             context=cls._normalize_json_value(context or {}),
             processable_at=timezone.now() + timedelta(seconds=delay_seconds),
             callback_path=cls._get_callback_path(callback),
+            before_send_path=cls._get_callback_path(before_send),
         )
 
     @classmethod
@@ -118,6 +122,7 @@ class BitrixBatchCommand(models.Model):
                     group_id=group_id,
                     delay_seconds=command_data.get("delay_seconds", delay_seconds),
                     callback=command_data.get("callback"),
+                    before_send=command_data.get("before_send"),
                 )
             )
         return result
@@ -131,6 +136,29 @@ class BitrixBatchCommand(models.Model):
         self.error_payload = None
         self.attempts += 1
         self.save(update_fields=["status", "started_at", "finished_at", "error", "error_payload", "attempts"])
+
+    def prepare_for_send(self) -> bool:
+        """Проверяет актуальность команды перед внешним вызовом."""
+        if not self.before_send_path:
+            return True
+        return import_string(self.before_send_path)(self)
+
+    def defer(self, delay_seconds: int = 5) -> None:
+        """Возвращает команду в очередь, пока занят её получатель."""
+        self.status = self.Status.PENDING
+        self.processable_at = timezone.now() + timedelta(seconds=delay_seconds)
+        self.started_at = None
+        self.save(update_fields=("status", "processable_at", "started_at"))
+
+    def mark_skipped(self, reason: str) -> None:
+        """Завершает неотправленную команду без вызова callback."""
+        self.status = self.Status.SKIPPED
+        self.result = {"skipped_reason": reason}
+        self.error = None
+        self.error_payload = None
+        self.finished_at = timezone.now()
+        self.callback_finished_at = self.finished_at
+        self.save(update_fields=("status", "result", "error", "error_payload", "finished_at", "callback_finished_at"))
 
     def mark_success(self, result: dict[str, Any] | None) -> None:
         """Сохраняет успешный результат."""
@@ -182,6 +210,8 @@ class BitrixBatchCommand(models.Model):
             if self.status == self.Status.SUCCESS:
                 return self.result
 
+            if self.status == self.Status.SKIPPED:
+                raise RuntimeError(self.result["skipped_reason"])
             if self.status == self.Status.ERROR:
                 raise RuntimeError(self.error or f"Bitrix batch command {self.pk} failed")
 
@@ -191,6 +221,8 @@ class BitrixBatchCommand(models.Model):
         self.refresh_from_db(fields=["status", "result", "error"])
         if self.status == self.Status.SUCCESS:
             return self.result
+        if self.status == self.Status.SKIPPED:
+            raise RuntimeError(self.result["skipped_reason"])
         if self.status == self.Status.ERROR:
             raise RuntimeError(self.error or f"Bitrix batch command {self.pk} failed")
 

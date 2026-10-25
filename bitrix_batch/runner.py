@@ -70,24 +70,40 @@ class BitrixCommandBatch:
         if not self.commands:
             return 0
 
+        commands_by_token: dict[int, list[BitrixBatchCommand]] = {}
+        for command in self.commands:
+            try:
+                if not command.prepare_for_send():
+                    continue
+            except Exception as exc:
+                command.mark_error(str(exc), error_payload={"error": "COMMAND_PREPARATION_FAILED"})
+                continue
+            commands_by_token.setdefault(command.but_id, []).append(command)
+        for commands in commands_by_token.values():
+            self._send(commands)
+        return len(self.commands)
+
+    def _send(self, commands: list[BitrixBatchCommand]) -> None:
+        """Отправляет подготовленные команды одного токена."""
+
         try:
-            batch_result = self.but.batch_api_call(
+            batch_result = commands[0].but.batch_api_call(
                 [
                     (str(command.id), command.method, command.params)
-                    for command in self.commands
+                    for command in commands
                 ],
                 timeout=self.timeout,
             )
         except BatchApiCallError as exc:
-            for command in self.commands:
+            for command in commands:
                 command.mark_error(str(exc))
-            return len(self.commands)
+            return
         except Exception as exc:
-            for command in self.commands:
+            for command in commands:
                 command.mark_error(str(exc))
-            return len(self.commands)
+            return
 
-        for command in self.commands:
+        for command in commands:
             if str(command.id) in batch_result.successes:
                 command.mark_success(batch_result.successes[str(command.id)])
             elif str(command.id) in batch_result.errors:
@@ -95,5 +111,3 @@ class BitrixCommandBatch:
                 command.mark_error(str(error_payload), error_payload=error_payload)
             else:
                 command.mark_error("No batch result returned from Bitrix")
-
-        return len(self.commands)
